@@ -2,8 +2,9 @@ const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
-const TerserWebpackPlugin = require("terser-webpack-plugin");
+const webpack = require("webpack");
+
+const isProduction = process.env.NODE_ENV === "PRODUCTION";
 
 module.exports = {
   entry: "./index.js",
@@ -43,46 +44,23 @@ module.exports = {
     new MiniCssExtractPlugin({
       filename: "[contenthash].css",
     }),
-    new CssMinimizerPlugin({
-      test: /\.css$/g,
-      minimizerOptions: {
-        preset: [
-          "default",
-          {
-            discardComments: { removeAll: true },
-          },
-        ],
-      },
-    }),
     new HtmlWebpackPlugin({
       title: "Webpack",
       template: "./template.hbs",
       meta: {
         viewport: "width=device-width, initial-scale=1.0",
       },
-      minify: {
-        collapseWhitespace: true,
-        useShortDoctype: true,
-        removeScriptTypeAttributes: true,
-      },
+      minify: isProduction
+        ? {
+            collapseWhitespace: true,
+            useShortDoctype: true,
+            removeScriptTypeAttributes: true,
+          }
+        : false,
     }),
     new CleanWebpackPlugin(),
+    new webpack.DefinePlugin({
+      IS_PRODUCTION: true,
+    }),
   ],
-  optimization: {
-    runtimeChunk: {
-      name: "runtime",
-    },
-    splitChunks: {
-      cacheGroups: {
-        commons: {
-          test: /[\\/]node_modules[\\/]/,
-          name: "venders",
-          chunks: "all",
-        },
-      },
-    },
-    minimize: true,
-    minimizer: [new TerserWebpackPlugin()],
-  },
-  mode: "none",
 };
